@@ -3,11 +3,9 @@ import pandas as pd
 import requests
 import pickle
 import os
-from typing import Optional, List
+from typing import Optional
 import logging
 from functools import lru_cache
-import time
-from datetime import datetime
 
 
 # Page config should be called before other Streamlit commands
@@ -26,15 +24,8 @@ st.markdown(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize session state
-if 'watchlist' not in st.session_state:
-    st.session_state.watchlist = []
-if 'user_ratings' not in st.session_state:
-    st.session_state.user_ratings = {}
-if 'last_recommendations' not in st.session_state:
-    st.session_state.last_recommendations = None
-if 'last_selected_movie' not in st.session_state:
-    st.session_state.last_selected_movie = None
+for k, v in (('watchlist', []), ('user_ratings', {}), ('last_recommendations', None), ('last_selected_movie', None)):
+    st.session_state.setdefault(k, v)
 
 # Load data
 try:
