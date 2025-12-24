@@ -18,15 +18,6 @@ logger = logging.getLogger(__name__)
 for k, v in (('watchlist', []), ('user_ratings', {}), ('last_recommendations', None), ('last_selected_movie', None)):
     st.session_state.setdefault(k, v)
 
-# UI styling — hide any residual 'Advanced Filters' expander in the sidebar
-st.markdown("""
-<style>
-[aria-label="Advanced Filters"] { display: none !important; }
-[data-testid="stExpander"] { display: none !important; }
-[data-testid="stExpanderHeader"] { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
-
 # Load data
 try:
     with open('movie_dict.pkl', 'rb') as f:
