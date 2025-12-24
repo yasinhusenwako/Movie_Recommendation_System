@@ -50,7 +50,7 @@ def get_recommendations(title: str, cosine_sim=cosine_sim) -> pd.Series:
         idx = movies[movies['title'] == title].index[0]
         sim_score = list(enumerate(cosine_sim[idx]))
         sim_score = sorted(sim_score, reverse=True, key=lambda x: x[1])
-        sim_score = sim_score[1:11]  # getting scores of 10 most similar movies
+        sim_score = sim_score[1:10]  # getting scores of 10 most similar movies
         movie_indices = [i[0] for i in sim_score]
         return movies.iloc[movie_indices]
     except IndexError:
@@ -126,46 +126,31 @@ def get_user_rating(movie_id: int) -> Optional[float]:
 
 def display_movie_info(movie_data: pd.Series):
     """Display movie information in a card format."""
-    poster_url = fetch_poster(movie_data['movie_id'])
-
-    st.markdown('<div>', unsafe_allow_html=True)
+    # compact, reusable card
+    poster_url = fetch_poster(int(movie_data['movie_id']))
     if poster_url:
         st.image(poster_url, width=150)
     else:
         st.image("https://via.placeholder.com/150x225?text=No+Poster", width=150)
 
-    st.markdown(f"**{movie_data['title']}**")
-
-    # Display additional metadata if available
+    st.markdown(f"**{movie_data.get('title', '')}**")
     if 'vote_average' in movie_data and pd.notna(movie_data['vote_average']):
-        rating = round(movie_data['vote_average'], 1)
-        st.write(f"⭐ {rating}/10")
-
+        st.write(f"⭐ {round(float(movie_data['vote_average']), 1)}/10")
     if 'release_date' in movie_data and pd.notna(movie_data['release_date']):
-        year = movie_data['release_date'][:4]
-        st.write(f"📅 {year}")
+        st.write(f"📅 {str(movie_data['release_date'])[:4]}")
 
-    st.caption(movie_data['overview'][:100] + "..." if len(
-        str(movie_data['overview'])) > 100 else movie_data['overview'])
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    overview = str(movie_data.get('overview', '') or '')
+    st.caption(overview[:100] + ('...' if len(overview) > 100 else ''))
 
 
-header_left, header_right = st.columns([2.2, 1.0], vertical_alignment="center")
-with header_left:
-    st.markdown('<div class="mrs-title">🎬 Movie Recommendation System</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="mrs-subtitle">Content-based recommendations (TF‑IDF + cosine similarity) with posters from TMDB.</div>', unsafe_allow_html=True)
-with header_right:
-    st.markdown(
-        f"""
-        <div style='text-align:right;'>
-          <span class='mrs-pill'>Movies: {int(len(movies))}</span>
-          <span class='mrs-pill'>Watchlist: {int(len(st.session_state.watchlist))}</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.title("🎬 Movie Recommendation System")
+    st.write(
+        "Content-based recommendations (TF‑IDF + cosine similarity) with posters from TMDB.")
+with col2:
+    st.write(f"**Movies:** {len(movies)}")
+    st.write(f"**Watchlist:** {len(st.session_state.watchlist)}")
 
 st.markdown('<div class="mrs-divider"></div>', unsafe_allow_html=True)
 
@@ -315,30 +300,7 @@ with tab_reco:
             selected_row = movies[movies['title'] == selected_movie].iloc[0]
             st.markdown("#### Selected movie")
             st.markdown('<div class="mrs-card">', unsafe_allow_html=True)
-
-            poster = fetch_poster(int(selected_row['movie_id']))
-            if poster:
-                st.image(poster, width=220)
-            else:
-                st.image(
-                    "https://via.placeholder.com/220x330?text=No+Poster", width=220)
-
-            st.markdown(f"**{selected_row['title']}**")
-
-            meta_bits = []
-            if 'vote_average' in selected_row and pd.notna(selected_row['vote_average']):
-                meta_bits.append(
-                    f"⭐ {round(float(selected_row['vote_average']), 1)}/10")
-            if 'release_date' in selected_row and pd.notna(selected_row['release_date']):
-                meta_bits.append(f"📅 {str(selected_row['release_date'])[:4]}")
-            if meta_bits:
-                st.markdown(
-                    f"<div class='mrs-meta'>{'  |  '.join(meta_bits)}</div>", unsafe_allow_html=True)
-
-            overview_txt = str(selected_row.get('overview', ''))
-            if overview_txt and overview_txt != 'nan':
-                st.markdown(
-                    f"<div class='mrs-caption'>{overview_txt[:180]}{'...' if len(overview_txt) > 180 else ''}</div>", unsafe_allow_html=True)
+            display_movie_info(selected_row)
 
             is_in_watchlist = int(
                 selected_row['movie_id']) in st.session_state.watchlist
