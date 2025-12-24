@@ -22,6 +22,8 @@ for k, v in (('watchlist', []), ('user_ratings', {}), ('last_recommendations', N
 st.markdown("""
 <style>
 [aria-label="Advanced Filters"] { display: none !important; }
+[data-testid="stExpander"] { display: none !important; }
+[data-testid="stExpanderHeader"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
