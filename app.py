@@ -205,14 +205,14 @@ with st.sidebar.expander("Advanced Filters", expanded=False):
             min_year = int(years.min())
             max_year = int(years.max())
             year_range = st.slider(
-                '📅 Release Year Range:', min_year, max_year, (min_year, max_year))
+                'Release Year Range:', min_year, max_year, (min_year, max_year))
 
     if 'vote_average' in movies.columns:
         ratings = pd.to_numeric(
             movies['vote_average'], errors='coerce').dropna()
         if not ratings.empty:
             rating_range = st.slider(
-                '⭐ Rating Range (TMDB):', 0.0, 10.0, (0.0, 10.0), step=0.1)
+                'Rating Range (TMDB):', 0.0, 10.0, (0.0, 10.0), step=0.1)
 
 # Build filtered list (used by recommendations tab)
 filtered_movies = movies.copy()
