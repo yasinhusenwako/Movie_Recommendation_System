@@ -17,28 +17,6 @@ st.set_page_config(page_title="Movie Recommendation System", layout="wide")
 st.markdown(
     """
     <style>
-      :root { --mrs-border: rgba(255,255,255,0.10); }
-      .mrs-title { font-size: 2.2rem; font-weight: 800; margin: 0.2rem 0 0.4rem 0; }
-      .mrs-subtitle { color: rgba(250,250,250,0.70); margin-bottom: 1rem; }
-      .mrs-card {
-        border: 1px solid var(--mrs-border);
-        border-radius: 14px;
-        padding: 12px;
-        background: rgba(255,255,255,0.03);
-      }
-      .mrs-card img { border-radius: 12px; }
-      .mrs-meta { color: rgba(250,250,250,0.75); font-size: 0.9rem; margin-top: 0.25rem; }
-      .mrs-caption { color: rgba(250,250,250,0.70); font-size: 0.85rem; }
-      .mrs-pill {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.14);
-        background: rgba(255,255,255,0.06);
-        font-size: 0.85rem;
-        margin-right: 6px;
-      }
-      .mrs-divider { border-top: 1px solid var(--mrs-border); margin: 0.75rem 0 1rem 0; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -126,7 +104,6 @@ def add_to_watchlist(movie_data: pd.Series):
         st.success(f"Added '{movie_data['title']}' to your watchlist!")
     else:
         st.info(f"'{movie_data['title']}' is already in your watchlist.")
-    st.rerun()
 
 
 def remove_from_watchlist(movie_id: int):
@@ -134,15 +111,15 @@ def remove_from_watchlist(movie_id: int):
     if movie_id in st.session_state.watchlist:
         st.session_state.watchlist.remove(movie_id)
         st.success("Removed from watchlist!")
-    st.rerun()
 
 
 def get_watchlist_movies() -> pd.DataFrame:
     """Get watchlist movies as DataFrame."""
     if not st.session_state.watchlist:
         return pd.DataFrame()
-    
-    watchlist_movies = movies[movies['movie_id'].isin(st.session_state.watchlist)]
+
+    watchlist_movies = movies[movies['movie_id'].isin(
+        st.session_state.watchlist)]
     return watchlist_movies
 
 
@@ -160,7 +137,7 @@ def display_movie_info(movie_data: pd.Series):
     """Display movie information in a card format."""
     poster_url = fetch_poster(movie_data['movie_id'])
 
-    st.markdown('<div class="mrs-card">', unsafe_allow_html=True)
+    st.markdown('<div>', unsafe_allow_html=True)
     if poster_url:
         st.image(poster_url, width=150)
     else:
@@ -185,7 +162,8 @@ def display_movie_info(movie_data: pd.Series):
 
 header_left, header_right = st.columns([2.2, 1.0], vertical_alignment="center")
 with header_left:
-    st.markdown('<div class="mrs-title">🎬 Movie Recommendation System</div>', unsafe_allow_html=True)
+    st.markdown('<div class="mrs-title">🎬 Movie Recommendation System</div>',
+                unsafe_allow_html=True)
     st.markdown('<div class="mrs-subtitle">Content-based recommendations (TF‑IDF + cosine similarity) with posters from TMDB.</div>', unsafe_allow_html=True)
 with header_right:
     st.markdown(
@@ -200,11 +178,13 @@ with header_right:
 
 st.markdown('<div class="mrs-divider"></div>', unsafe_allow_html=True)
 
-tab_reco, tab_watchlist, tab_about = st.tabs(["Recommendations", "Watchlist", "About"])
+tab_reco, tab_watchlist, tab_about = st.tabs(
+    ["Recommendations", "Watchlist", "About"])
 
 # Sidebar
 st.sidebar.title("🎛️ Controls")
-st.sidebar.caption("Use filters to narrow the catalog before selecting a movie.")
+st.sidebar.caption(
+    "Use filters to narrow the catalog before selecting a movie.")
 st.sidebar.markdown("---")
 
 search_term = st.sidebar.text_input('🔍 Search for a movie:')
@@ -227,8 +207,10 @@ sort_mode = "Relevance (Default)"
 max_dropdown = 500
 
 with st.sidebar.expander("Advanced Filters", expanded=False):
-    max_dropdown = st.number_input("Max movies in dropdown", min_value=50, max_value=5000, value=500, step=50)
-    tag_query = st.text_input("Tags keyword (optional)", value="", help="Matches against the precomputed 'tags' text")
+    max_dropdown = st.number_input(
+        "Max movies in dropdown", min_value=50, max_value=5000, value=500, step=50)
+    tag_query = st.text_input("Tags keyword (optional)", value="",
+                              help="Matches against the precomputed 'tags' text")
     min_overview_len = st.slider("Minimum overview length", 0, 400, 0, step=10)
     sort_mode = st.selectbox(
         "Sort by",
@@ -243,46 +225,56 @@ with st.sidebar.expander("Advanced Filters", expanded=False):
     )
 
     if 'release_date' in movies.columns:
-        years = pd.to_datetime(movies['release_date'], errors='coerce').dt.year.dropna()
+        years = pd.to_datetime(
+            movies['release_date'], errors='coerce').dt.year.dropna()
         if not years.empty:
             min_year = int(years.min())
             max_year = int(years.max())
-            year_range = st.slider('📅 Release Year Range:', min_year, max_year, (min_year, max_year))
+            year_range = st.slider(
+                '📅 Release Year Range:', min_year, max_year, (min_year, max_year))
 
     if 'vote_average' in movies.columns:
-        ratings = pd.to_numeric(movies['vote_average'], errors='coerce').dropna()
+        ratings = pd.to_numeric(
+            movies['vote_average'], errors='coerce').dropna()
         if not ratings.empty:
-            rating_range = st.slider('⭐ Rating Range (TMDB):', 0.0, 10.0, (0.0, 10.0), step=0.1)
+            rating_range = st.slider(
+                '⭐ Rating Range (TMDB):', 0.0, 10.0, (0.0, 10.0), step=0.1)
 
 # Build filtered list (used by recommendations tab)
 filtered_movies = movies.copy()
 
 if search_term:
     filtered_movies = filtered_movies[
-        filtered_movies['title'].str.contains(search_term, case=False, na=False)
+        filtered_movies['title'].str.contains(
+            search_term, case=False, na=False)
     ]
 
 if selected_genre != 'All' and 'genres' in filtered_movies.columns:
     filtered_movies = filtered_movies[
-        filtered_movies['genres'].apply(lambda x: selected_genre in x if isinstance(x, list) else False)
+        filtered_movies['genres'].apply(
+            lambda x: selected_genre in x if isinstance(x, list) else False)
     ]
 
 if min_overview_len and 'overview' in filtered_movies.columns:
     filtered_movies = filtered_movies[
-        filtered_movies['overview'].fillna("").astype(str).str.len() >= int(min_overview_len)
+        filtered_movies['overview'].fillna("").astype(
+            str).str.len() >= int(min_overview_len)
     ]
 
 if tag_query and 'tags' in filtered_movies.columns:
     filtered_movies = filtered_movies[
-        filtered_movies['tags'].fillna("").astype(str).str.contains(tag_query, case=False, na=False)
+        filtered_movies['tags'].fillna("").astype(
+            str).str.contains(tag_query, case=False, na=False)
     ]
 
 if year_range is not None and 'release_date' in filtered_movies.columns:
     filtered_movies = filtered_movies.assign(
-        _year=pd.to_datetime(filtered_movies['release_date'], errors='coerce').dt.year
+        _year=pd.to_datetime(
+            filtered_movies['release_date'], errors='coerce').dt.year
     )
     filtered_movies = filtered_movies[
-        filtered_movies['_year'].between(year_range[0], year_range[1], inclusive='both')
+        filtered_movies['_year'].between(
+            year_range[0], year_range[1], inclusive='both')
     ].drop(columns=['_year'])
 
 if rating_range is not None and 'vote_average' in filtered_movies.columns:
@@ -290,21 +282,27 @@ if rating_range is not None and 'vote_average' in filtered_movies.columns:
         _rating=pd.to_numeric(filtered_movies['vote_average'], errors='coerce')
     )
     filtered_movies = filtered_movies[
-        filtered_movies['_rating'].between(rating_range[0], rating_range[1], inclusive='both')
+        filtered_movies['_rating'].between(
+            rating_range[0], rating_range[1], inclusive='both')
     ].drop(columns=['_rating'])
 
 # Sorting
 if sort_mode != "Relevance (Default)":
     if sort_mode == "Title (A → Z)":
-        filtered_movies = filtered_movies.sort_values(by='title', ascending=True, na_position='last')
+        filtered_movies = filtered_movies.sort_values(
+            by='title', ascending=True, na_position='last')
     elif sort_mode in ("Rating (High to Low)", "Rating (Low to High)") and 'vote_average' in filtered_movies.columns:
         asc = sort_mode == "Rating (Low to High)"
-        filtered_movies = filtered_movies.assign(_rating=pd.to_numeric(filtered_movies['vote_average'], errors='coerce'))
-        filtered_movies = filtered_movies.sort_values(by='_rating', ascending=asc, na_position='last').drop(columns=['_rating'])
+        filtered_movies = filtered_movies.assign(_rating=pd.to_numeric(
+            filtered_movies['vote_average'], errors='coerce'))
+        filtered_movies = filtered_movies.sort_values(
+            by='_rating', ascending=asc, na_position='last').drop(columns=['_rating'])
     elif sort_mode in ("Newest first", "Oldest first") and 'release_date' in filtered_movies.columns:
         asc = sort_mode == "Oldest first"
-        filtered_movies = filtered_movies.assign(_date=pd.to_datetime(filtered_movies['release_date'], errors='coerce'))
-        filtered_movies = filtered_movies.sort_values(by='_date', ascending=asc, na_position='last').drop(columns=['_date'])
+        filtered_movies = filtered_movies.assign(_date=pd.to_datetime(
+            filtered_movies['release_date'], errors='coerce'))
+        filtered_movies = filtered_movies.sort_values(
+            by='_date', ascending=asc, na_position='last').drop(columns=['_date'])
 
 with tab_reco:
     left, right = st.columns([1.15, 2.0], gap="large")
@@ -331,23 +329,28 @@ with tab_reco:
             if poster:
                 st.image(poster, width=220)
             else:
-                st.image("https://via.placeholder.com/220x330?text=No+Poster", width=220)
+                st.image(
+                    "https://via.placeholder.com/220x330?text=No+Poster", width=220)
 
             st.markdown(f"**{selected_row['title']}**")
 
             meta_bits = []
             if 'vote_average' in selected_row and pd.notna(selected_row['vote_average']):
-                meta_bits.append(f"⭐ {round(float(selected_row['vote_average']), 1)}/10")
+                meta_bits.append(
+                    f"⭐ {round(float(selected_row['vote_average']), 1)}/10")
             if 'release_date' in selected_row and pd.notna(selected_row['release_date']):
                 meta_bits.append(f"📅 {str(selected_row['release_date'])[:4]}")
             if meta_bits:
-                st.markdown(f"<div class='mrs-meta'>{'  |  '.join(meta_bits)}</div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div class='mrs-meta'>{'  |  '.join(meta_bits)}</div>", unsafe_allow_html=True)
 
             overview_txt = str(selected_row.get('overview', ''))
             if overview_txt and overview_txt != 'nan':
-                st.markdown(f"<div class='mrs-caption'>{overview_txt[:180]}{'...' if len(overview_txt) > 180 else ''}</div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div class='mrs-caption'>{overview_txt[:180]}{'...' if len(overview_txt) > 180 else ''}</div>", unsafe_allow_html=True)
 
-            is_in_watchlist = int(selected_row['movie_id']) in st.session_state.watchlist
+            is_in_watchlist = int(
+                selected_row['movie_id']) in st.session_state.watchlist
             btn_label = "Remove from watchlist" if is_in_watchlist else "Add to watchlist"
             if st.button(btn_label, key=f"wl_selected_{int(selected_row['movie_id'])}"):
                 if is_in_watchlist:
@@ -366,7 +369,8 @@ with tab_reco:
                 st.session_state.last_selected_movie = selected_movie
 
             if not recommendations.empty:
-                st.success(f'Top 10 movie recommendations for "{selected_movie}":')
+                st.success(
+                    f'Top 10 movie recommendations for "{selected_movie}":')
 
                 for i in range(0, len(recommendations), 3):
                     cols = st.columns(3, gap="small")
@@ -377,7 +381,7 @@ with tab_reco:
 
                             movie_id = int(movie_data['movie_id'])
                             is_in_watchlist = movie_id in st.session_state.watchlist
-                            small_label = "✅" if is_in_watchlist else "➕"
+                            small_label = "✅" if is_in_watchlist else "Add to watchlist"
                             if st.button(small_label, key=f"wl_reco_{movie_id}"):
                                 if is_in_watchlist:
                                     remove_from_watchlist(movie_id)
@@ -400,7 +404,8 @@ with tab_watchlist:
                 st.session_state.watchlist = []
                 st.rerun()
         with action_right:
-            st.caption("Tip: remove individual items below, or clear the whole list.")
+            st.caption(
+                "Tip: remove individual items below, or clear the whole list.")
 
         for i in range(0, len(wl), 3):
             cols = st.columns(3, gap="small")
@@ -426,4 +431,5 @@ with tab_about:
 
 # Footer
 st.markdown("---")
-st.markdown("*Powered by TMDB API | Content-based recommendations using TF-IDF and Cosine Similarity*")
+st.markdown(
+    "*Powered by TMDB API | Content-based recommendations using TF-IDF and Cosine Similarity*")
