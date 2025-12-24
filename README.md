@@ -51,18 +51,28 @@ cp .env.example .env
 TMDB_API_KEY=your_actual_tmdb_api_key_here
 ```
 
-### 4. Prepare Data Files
+### 4. Download Required Data Files
 
-Make sure you have the following files in the project directory:
+The TMDB dataset files are too large for GitHub. Download them from:
 
-- `movie_dict.pkl` - Processed movie data
-- `cosine_sim.pkl` - Cosine similarity matrix
-- `tmdb_5000_movies.csv` - Raw movie data
-- `tmdb_5000_credits.csv` - Raw credits data
+- [TMDB 5000 Movie Dataset](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata)
+  - Download `tmdb_5000_movies.csv` and `tmdb_5000_credits.csv`
+  - Place both files in the project directory
 
-If you need to regenerate the processed data files, run the `Movie_Recommendation_System.ipynb` notebook.
+### 5. Generate Processed Data Files
 
-### 5. Run the Application
+Run the data processing script to create the required pickle files:
+
+```bash
+python generate_data.py
+```
+
+This will create:
+
+- `movie_dict.pkl` - Processed movie data with tags
+- `cosine_sim.pkl` - Cosine similarity matrix for recommendations
+
+### 6. Run the Application
 
 ```bash
 streamlit run app.py
