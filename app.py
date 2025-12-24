@@ -367,10 +367,15 @@ with tab_reco:
                 recommendations = get_recommendations(selected_movie)
                 st.session_state.last_recommendations = recommendations
                 st.session_state.last_selected_movie = selected_movie
+        elif st.session_state.last_recommendations is not None and st.session_state.last_selected_movie == selected_movie:
+            recommendations = st.session_state.last_recommendations
+        else:
+            recommendations = None
 
+        if recommendations is not None:
             if not recommendations.empty:
                 st.success(
-                    f'Top 10 movie recommendations for "{selected_movie}":')
+                    f'Top 10 movie recommendations for "{st.session_state.last_selected_movie}":')
 
                 for i in range(0, len(recommendations), 3):
                     cols = st.columns(3, gap="small")
@@ -391,6 +396,7 @@ with tab_reco:
                 st.error("No recommendations available.")
         else:
             st.info("Pick a movie on the left, then click **Show Recommendations**.")
+
 
 with tab_watchlist:
     st.markdown("#### Your watchlist")
