@@ -146,8 +146,6 @@ tab_reco, tab_watchlist, tab_about = st.tabs(
 
 # Sidebar
 st.sidebar.title("🎛️ Controls")
-st.sidebar.caption(
-    "Use filters to narrow the catalog before selecting a movie.")
 st.sidebar.markdown("---")
 
 search_term = st.sidebar.text_input('🔍 Search for a movie:')
