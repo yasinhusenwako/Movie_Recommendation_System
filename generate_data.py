@@ -19,7 +19,7 @@ print("Merging datasets...")
 movies = movies.merge(credits, left_on='title', right_on='title')
 
 print("Selecting relevant columns...")
-movies = movies[['movie_id', 'title', 'overview',
+movies = movies[['movie_id', 'title', 'overview', 'release_date', 'vote_average',
                  'genres', 'keywords', 'cast', 'crew']]
 
 
@@ -49,7 +49,7 @@ movies['tags'] = movies['genres'] + \
     movies['keywords']+movies['cast']+movies['crew']
 
 print("Cleaning up data...")
-movies = movies[['movie_id', 'title', 'overview', 'tags']]
+movies = movies[['movie_id', 'title', 'overview', 'release_date', 'vote_average', 'genres', 'tags']]
 movies['tags'] = movies['tags'].apply(lambda x: " ".join(x))
 movies['tags'] = movies['tags'].apply(lambda x: x.lower())
 
