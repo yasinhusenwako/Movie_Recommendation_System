@@ -8,7 +8,7 @@ import logging
 from functools import lru_cache
 
 
-# Page config should be called before other Streamlit commands
+# Page configuration
 st.set_page_config(page_title="Movie Recommendation System", layout="wide")
 
 # Configure logging
@@ -77,7 +77,6 @@ def fetch_poster(movie_id: int) -> Optional[str]:
 
 
 def add_to_watchlist(movie_data: pd.Series):
-    """Add movie to watchlist."""
     movie_id = movie_data['movie_id']
     if movie_id not in st.session_state.watchlist:
         st.session_state.watchlist.append(movie_id)
@@ -87,7 +86,6 @@ def add_to_watchlist(movie_data: pd.Series):
 
 
 def remove_from_watchlist(movie_id: int):
-    """Remove movie from watchlist."""
     if movie_id in st.session_state.watchlist:
         st.session_state.watchlist.remove(movie_id)
         st.success("Removed from watchlist!")
@@ -104,7 +102,6 @@ def get_watchlist_movies() -> pd.DataFrame:
 
 
 def display_movie_info(movie_data: pd.Series, width: int = 150, overview_len: int = 100):
-    """Render a compact movie card."""
     poster_url = fetch_poster(int(movie_data.get('movie_id', 0)))
     if poster_url:
         st.image(poster_url, width=width)
@@ -112,11 +109,11 @@ def display_movie_info(movie_data: pd.Series, width: int = 150, overview_len: in
         st.image(
             f"https://via.placeholder.com/{width}x{int(width*1.5)}?text=No+Poster", width=width)
 
-    st.markdown(f"**{movie_data.get('title', '')}**")
+    st.markdown(f"{movie_data.get('title', '')}")
     if 'vote_average' in movie_data and pd.notna(movie_data['vote_average']):
-        st.write(f"⭐ {round(float(movie_data['vote_average']), 1)}/10")
+        st.write(f" {round(float(movie_data['vote_average']), 1)}/10")
     if 'release_date' in movie_data and pd.notna(movie_data['release_date']):
-        st.write(f"📅 {str(movie_data['release_date'])[:4]}")
+        st.write(f"{str(movie_data['release_date'])[:4]}")
 
     overview = str(movie_data.get('overview', '') or '')
     if overview:
@@ -146,9 +143,6 @@ st.sidebar.markdown("---")
 
 search_term = st.sidebar.text_input('🔍 Search for a movie:')
 
-# Genre filter removed to keep sidebar minimal
-
-
 sort_mode = st.sidebar.selectbox(
     "Sort by",
     [
@@ -161,7 +155,7 @@ sort_mode = st.sidebar.selectbox(
     ],
 )
 
-# Build filtered list (used by recommendations tab)
+# filtered list (used by recommendations tab)
 filtered_movies = movies.copy()
 
 if search_term:
@@ -222,7 +216,7 @@ with tab_reco:
             st.markdown('</div>', unsafe_allow_html=True)
 
     with right:
-        st.markdown("#### Recommendations")
+        st.markdown(" Recommendations")
         if selected_movie and st.button('🎬 Show Recommendations', type="primary"):
             with st.spinner('Finding recommendations for you...'):
                 recommendations = get_recommendations(selected_movie)
@@ -256,11 +250,10 @@ with tab_reco:
             else:
                 st.error("No recommendations available.")
         else:
-            st.info("Pick a movie on the left, then click **Show Recommendations**.")
-
+            st.info("Pick a movie on the left, then click Show Recommendations.")
 
 with tab_watchlist:
-    st.markdown("#### Your watchlist")
+    st.markdown("Your watchlist")
     wl = get_watchlist_movies()
     if wl.empty:
         st.info("Your watchlist is empty. Add movies from the Recommendations tab.")
@@ -283,19 +276,17 @@ with tab_watchlist:
                     movie_id = int(movie_data['movie_id'])
                     if st.button("Remove", key=f"wl_remove_{movie_id}"):
                         remove_from_watchlist(movie_id)
-
 with tab_about:
-    st.markdown("#### About")
+    st.markdown("About")
     st.markdown(
         """
-        - **Model**: Content-based filtering
-        - **Text features**: genres + keywords + top cast + director (tags)
-        - **Vectorization**: TF‑IDF
-        - **Similarity**: cosine similarity
-        - **Posters**: TMDB API
+        - Model: Content-based filtering
+        - Text features: genres + keywords + top cast + director (tags)
+        - Vectorization: TF‑IDF
+        - Similarity: cosine similarity
+        - Posters: TMDB API
         """
     )
-
 # Footer
 st.markdown("---")
 st.markdown(
