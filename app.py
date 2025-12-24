@@ -11,15 +11,6 @@ from functools import lru_cache
 # Page config should be called before other Streamlit commands
 st.set_page_config(page_title="Movie Recommendation System", layout="wide")
 
-# UI styling
-st.markdown(
-    """
-    <style>
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,7 +36,6 @@ except Exception as e:
 
 
 def get_recommendations(title: str, cosine_sim=cosine_sim) -> pd.Series:
-    """Get movie recommendations based on title."""
     try:
         idx = movies[movies['title'] == title].index[0]
         sim_score = list(enumerate(cosine_sim[idx]))
@@ -64,7 +54,6 @@ def get_recommendations(title: str, cosine_sim=cosine_sim) -> pd.Series:
 
 @lru_cache(maxsize=1000)
 def fetch_poster(movie_id: int) -> Optional[str]:
-    """Fetch movie poster from TMDB API with caching."""
     api_key = os.getenv('TMDB_API_KEY', "54083c6f5142c6c6555c6740dc776e28")
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}&language=en-US"
 
@@ -114,35 +103,6 @@ def get_watchlist_movies() -> pd.DataFrame:
     return watchlist_movies
 
 
-def rate_movie(movie_id: int, rating: float):
-    """Rate a movie."""
-    st.session_state.user_ratings[movie_id] = rating
-
-
-def get_user_rating(movie_id: int) -> Optional[float]:
-    """Get user rating for a movie."""
-    return st.session_state.user_ratings.get(movie_id)
-
-
-def display_movie_info(movie_data: pd.Series):
-    """Display movie information in a card format."""
-    # compact, reusable card
-    poster_url = fetch_poster(int(movie_data['movie_id']))
-    if poster_url:
-        st.image(poster_url, width=150)
-    else:
-        st.image("https://via.placeholder.com/150x225?text=No+Poster", width=150)
-
-    st.markdown(f"**{movie_data.get('title', '')}**")
-    if 'vote_average' in movie_data and pd.notna(movie_data['vote_average']):
-        st.write(f"⭐ {round(float(movie_data['vote_average']), 1)}/10")
-    if 'release_date' in movie_data and pd.notna(movie_data['release_date']):
-        st.write(f"📅 {str(movie_data['release_date'])[:4]}")
-
-    overview = str(movie_data.get('overview', '') or '')
-    st.caption(overview[:100] + ('...' if len(overview) > 100 else ''))
-
-
 col1, col2 = st.columns([3, 1])
 with col1:
     st.title("🎬 Movie Recommendation System")
@@ -165,21 +125,12 @@ st.sidebar.markdown("---")
 
 search_term = st.sidebar.text_input('🔍 Search for a movie:')
 
-if 'genres' in movies.columns:
-    all_genres = set()
-    for genres_list in movies['genres'].dropna():
-        if isinstance(genres_list, list):
-            all_genres.update(genres_list)
-    selected_genre = st.sidebar.selectbox(
-        ' Genre:', ['All'] + sorted(list(all_genres)))
-else:
-    selected_genre = 'All'
+# Genre filter removed to keep sidebar minimal
 
-year_range = None
-rating_range = None
-tag_query = ""
+
 sort_mode = "Relevance (Default)"
-max_dropdown = 500
+# Removed genre/tag/year/rating filters; dropdown cap fixed to 500
+
 
 with st.sidebar.expander("Advanced Filters", expanded=False):
     max_dropdown = st.number_input(
@@ -223,38 +174,19 @@ if search_term:
             search_term, case=False, na=False)
     ]
 
-if selected_genre != 'All' and 'genres' in filtered_movies.columns:
-    filtered_movies = filtered_movies[
-        filtered_movies['genres'].apply(
-            lambda x: selected_genre in x if isinstance(x, list) else False)
-    ]
+# Genre filter removed
+
 
 # Minimum overview length filter removed
 
-if tag_query and 'tags' in filtered_movies.columns:
-    filtered_movies = filtered_movies[
-        filtered_movies['tags'].fillna("").astype(
-            str).str.contains(tag_query, case=False, na=False)
-    ]
+# Tag filter removed
 
-if year_range is not None and 'release_date' in filtered_movies.columns:
-    filtered_movies = filtered_movies.assign(
-        _year=pd.to_datetime(
-            filtered_movies['release_date'], errors='coerce').dt.year
-    )
-    filtered_movies = filtered_movies[
-        filtered_movies['_year'].between(
-            year_range[0], year_range[1], inclusive='both')
-    ].drop(columns=['_year'])
 
-if rating_range is not None and 'vote_average' in filtered_movies.columns:
-    filtered_movies = filtered_movies.assign(
-        _rating=pd.to_numeric(filtered_movies['vote_average'], errors='coerce')
-    )
-    filtered_movies = filtered_movies[
-        filtered_movies['_rating'].between(
-            rating_range[0], rating_range[1], inclusive='both')
-    ].drop(columns=['_rating'])
+# Year filter removed
+
+
+# Rating filter removed
+
 
 # Sorting
 if sort_mode != "Relevance (Default)":
@@ -278,12 +210,12 @@ with tab_reco:
     left, right = st.columns([1.15, 2.0], gap="large")
 
     with left:
-        st.markdown("#### Pick a movie")
+        st.markdown(" Pick a movie")
         if filtered_movies.empty:
             st.warning("No movies match your filters.")
             selected_movie = None
         else:
-            dropdown_df = filtered_movies.head(int(max_dropdown))
+            dropdown_df = filtered_movies.head(500)
             selected_movie = st.selectbox(
                 'Select a movie you like:',
                 dropdown_df['title'].values,
@@ -292,7 +224,7 @@ with tab_reco:
 
         if selected_movie:
             selected_row = movies[movies['title'] == selected_movie].iloc[0]
-            st.markdown("#### Selected movie")
+            st.markdown(" Selected movie")
             st.markdown('<div class="mrs-card">', unsafe_allow_html=True)
             display_movie_info(selected_row)
 
