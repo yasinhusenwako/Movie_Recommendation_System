@@ -171,14 +171,13 @@ if 'genres' in movies.columns:
         if isinstance(genres_list, list):
             all_genres.update(genres_list)
     selected_genre = st.sidebar.selectbox(
-        '🎭 Genre:', ['All'] + sorted(list(all_genres)))
+        ' Genre:', ['All'] + sorted(list(all_genres)))
 else:
     selected_genre = 'All'
 
 year_range = None
 rating_range = None
 tag_query = ""
-min_overview_len = 0
 sort_mode = "Relevance (Default)"
 max_dropdown = 500
 
@@ -187,7 +186,6 @@ with st.sidebar.expander("Advanced Filters", expanded=False):
         "Max movies in dropdown", min_value=50, max_value=5000, value=500, step=50)
     tag_query = st.text_input("Tags keyword (optional)", value="",
                               help="Matches against the precomputed 'tags' text")
-    min_overview_len = st.slider("Minimum overview length", 0, 400, 0, step=10)
     sort_mode = st.selectbox(
         "Sort by",
         [
@@ -231,11 +229,7 @@ if selected_genre != 'All' and 'genres' in filtered_movies.columns:
             lambda x: selected_genre in x if isinstance(x, list) else False)
     ]
 
-if min_overview_len and 'overview' in filtered_movies.columns:
-    filtered_movies = filtered_movies[
-        filtered_movies['overview'].fillna("").astype(
-            str).str.len() >= int(min_overview_len)
-    ]
+# Minimum overview length filter removed
 
 if tag_query and 'tags' in filtered_movies.columns:
     filtered_movies = filtered_movies[
