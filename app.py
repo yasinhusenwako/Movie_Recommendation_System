@@ -103,6 +103,27 @@ def get_watchlist_movies() -> pd.DataFrame:
     return watchlist_movies
 
 
+def display_movie_info(movie_data: pd.Series, width: int = 150, overview_len: int = 100):
+    """Render a compact movie card."""
+    poster_url = fetch_poster(int(movie_data.get('movie_id', 0)))
+    if poster_url:
+        st.image(poster_url, width=width)
+    else:
+        st.image(
+            f"https://via.placeholder.com/{width}x{int(width*1.5)}?text=No+Poster", width=width)
+
+    st.markdown(f"**{movie_data.get('title', '')}**")
+    if 'vote_average' in movie_data and pd.notna(movie_data['vote_average']):
+        st.write(f"⭐ {round(float(movie_data['vote_average']), 1)}/10")
+    if 'release_date' in movie_data and pd.notna(movie_data['release_date']):
+        st.write(f"📅 {str(movie_data['release_date'])[:4]}")
+
+    overview = str(movie_data.get('overview', '') or '')
+    if overview:
+        st.caption(overview[:overview_len] +
+                   ('...' if len(overview) > overview_len else ''))
+
+
 col1, col2 = st.columns([3, 1])
 with col1:
     st.title("🎬 Movie Recommendation System")
@@ -128,42 +149,17 @@ search_term = st.sidebar.text_input('🔍 Search for a movie:')
 # Genre filter removed to keep sidebar minimal
 
 
-sort_mode = "Relevance (Default)"
-# Removed genre/tag/year/rating filters; dropdown cap fixed to 500
-
-
-with st.sidebar.expander("Advanced Filters", expanded=False):
-    max_dropdown = st.number_input(
-        "Max movies in dropdown", min_value=50, max_value=5000, value=500, step=50)
-    tag_query = st.text_input("Tags keyword (optional)", value="",
-                              help="Matches against the precomputed 'tags' text")
-    sort_mode = st.selectbox(
-        "Sort by",
-        [
-            "Relevance (Default)",
-            "Rating (High to Low)",
-            "Rating (Low to High)",
-            "Newest first",
-            "Oldest first",
-            "Title (A → Z)",
-        ],
-    )
-
-    if 'release_date' in movies.columns:
-        years = pd.to_datetime(
-            movies['release_date'], errors='coerce').dt.year.dropna()
-        if not years.empty:
-            min_year = int(years.min())
-            max_year = int(years.max())
-            year_range = st.slider(
-                'Release Year Range:', min_year, max_year, (min_year, max_year))
-
-    if 'vote_average' in movies.columns:
-        ratings = pd.to_numeric(
-            movies['vote_average'], errors='coerce').dropna()
-        if not ratings.empty:
-            rating_range = st.slider(
-                'Rating Range (TMDB):', 0.0, 10.0, (0.0, 10.0), step=0.1)
+sort_mode = st.sidebar.selectbox(
+    "Sort by",
+    [
+        "Relevance (Default)",
+        "Rating (High to Low)",
+        "Rating (Low to High)",
+        "Newest first",
+        "Oldest first",
+        "Title (A → Z)",
+    ],
+)
 
 # Build filtered list (used by recommendations tab)
 filtered_movies = movies.copy()
@@ -173,20 +169,6 @@ if search_term:
         filtered_movies['title'].str.contains(
             search_term, case=False, na=False)
     ]
-
-# Genre filter removed
-
-
-# Minimum overview length filter removed
-
-# Tag filter removed
-
-
-# Year filter removed
-
-
-# Rating filter removed
-
 
 # Sorting
 if sort_mode != "Relevance (Default)":
