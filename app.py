@@ -155,27 +155,6 @@ sort_mode = st.sidebar.selectbox(
     ],
 )
 
-# Hide any leftover "Advanced Filters" header that may persist in the sidebar
-st.markdown(
-    """
-    <script>
-    setTimeout(function(){
-      const nodes = Array.from(document.querySelectorAll('*'));
-      nodes.forEach(function(n){
-        try {
-          if(n.innerText && n.innerText.trim() === 'Advanced Filters'){
-            let t = n;
-            while(t && t.tagName !== 'DIV' && t.tagName !== 'BUTTON') t = t.parentElement;
-            if(t) t.style.display = 'none';
-          }
-        } catch(e){}
-      });
-    }, 500);
-    </script>
-    """,
-    unsafe_allow_html=True,
-)
-
 # filtered list (used by recommendations tab)
 filtered_movies = movies.copy()
 
